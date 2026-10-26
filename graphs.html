@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graph Traversal Visualizer – BFS & DFS</title>
+<style>
+:root{--bg:#f0f7ff;--card:#fff;--tx:#17324d;--mut:#5f7a95;--bd:#cfe3f7;--ac:#3b9bea;--acd:#1f78c8;--lt:#e3f1ff;--un:#eef5fc;--cur:#ffb02e;--vis:#3fbf8f;--fr:#7cc4f5;--ed:#a9bfd6;--tree:#3fbf8f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:linear-gradient(90deg,#dff0ff,#fff);border-bottom:2px solid var(--bd);padding:12px 20px}
+h1{font-size:1.35rem;margin:0;color:var(--acd)}.sub{color:var(--mut);margin:0;font-size:.9rem}
+.w{max-width:1280px;margin:0 auto;padding:16px}
+.g{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:16px;align-items:start}@media(max-width:900px){.g{grid-template-columns:1fr}}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:14px;box-shadow:0 1px 4px rgba(59,155,234,.08)}
+.ph{display:flex;align-items:center;gap:8px;margin:-12px -12px 10px;padding:8px 12px;background:var(--lt);border-radius:12px 12px 0 0;border-bottom:1px solid var(--bd);font-weight:700;color:var(--acd)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+button,select,input{font:inherit;color:var(--tx);background:#fff;border:1px solid var(--bd);border-radius:8px;padding:6px 10px}
+button{cursor:pointer}button:hover{background:var(--lt)}button.p{background:var(--ac);color:#fff;border-color:var(--ac)}button.p:hover{background:var(--acd)}button.on{background:var(--lt);border-color:var(--ac);color:var(--acd);font-weight:600}button:disabled{opacity:.45;cursor:default}
+input[type=text]{width:90px}input[type=range]{padding:0;width:110px}
+svg{width:100%;height:auto;background:#fafdff;border:1px solid var(--bd);border-radius:10px;touch-action:none;display:block}
+.n circle{stroke:#2b5d8c;stroke-width:1.5;transition:fill .25s}.n text{font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none;fill:#10304d}
+.e{transition:stroke .25s}
+.lg span{display:inline-flex;align-items:center;gap:4px;margin-right:12px;font-size:.85rem;color:var(--mut)}.lg i{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid #2b5d8c}
+.box{display:flex;gap:6px;flex-wrap:wrap;min-height:34px;padding:4px;border:1px dashed var(--bd);border-radius:8px;background:#fafdff}
+.t{min-width:30px;text-align:center;padding:3px 8px;border-radius:6px;background:var(--fr);color:#0c3558;font-weight:700}.t.v{background:var(--vis);color:#fff}
+.lab{font-weight:600;font-size:.9rem;margin:6px 0 4px}
+#log{height:150px;overflow:auto;font-size:.85rem;margin:0;padding-left:22px}#log li.a{color:var(--acd);font-weight:700}
+.msg{padding:8px 10px;border-radius:8px;background:var(--lt);min-height:42px;border-left:4px solid var(--ac)}
+.st{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin-top:10px}.st b{display:block;font-size:1.25rem;color:var(--acd)}
+table{border-collapse:collapse;width:100%;font-size:.85rem}td,th{border:1px solid var(--bd);padding:3px 6px;text-align:left}th{background:var(--lt)}
+.code{margin:0;font:13px/1.65 Consolas,"Courier New",monospace;background:#fafdff;border:1px solid var(--bd);border-radius:8px;overflow-x:auto;padding:6px 0}
+.code div{white-space:pre;padding:0 10px 0 0;border-left:4px solid transparent}.code div.hl{background:#fff1cc;border-left-color:var(--cur)}
+.code span{display:inline-block;width:32px;text-align:right;margin-right:12px;color:#9ab;user-select:none}
+.code em{color:#7a8da1;font-style:italic}
+details{margin-bottom:6px}summary{cursor:pointer;font-weight:600;color:var(--acd)}code{background:var(--lt);padding:1px 5px;border-radius:4px}
+.m{color:var(--mut);font-size:.85rem}
+@media print{button{display:none}}
+</style>
+</head>
+<body>
+<header><h1>Graph Traversal Visualizer</h1><p class="sub">Data Structures and Algorithms · Graphs and Graph Traversal Algorithms (BFS &amp; DFS)</p></header>
+<div class="w">
+<div class="g">
+
+<!-- LEFT: SIMULATION -->
+<div>
+ <div class="c">
+  <div class="ph">① Build the graph</div>
+  <div class="row">
+   <button id="mN" class="on">＋ Node</button><button id="mE">⟷ Edge</button><button id="mM">✥ Move</button><button id="mD">✕ Delete</button>
+   <label><input type="checkbox" id="dir"> Directed</label>
+   <button id="sample">Sample graph</button><button id="clear">Clear</button>
+  </div>
+  <div class="row"><input type="text" id="ein" placeholder="e.g. A-B"><button id="addE">Add edge</button><span class="m" id="hint"></span></div>
+  <svg id="sv" viewBox="0 0 640 400"></svg>
+  <div class="lg" style="margin-top:8px"><span><i style="background:var(--un)"></i>Unvisited</span><span><i style="background:var(--fr)"></i>In queue/stack</span><span><i style="background:var(--cur)"></i>Current</span><span><i style="background:var(--vis)"></i>Visited</span></div>
+ </div>
+
+ <div class="c">
+  <div class="ph">② Run the traversal</div>
+  <div class="row">
+   <select id="alg"><option value="bfs">BFS (Breadth-First Search)</option><option value="dfs">DFS (Depth-First Search)</option></select>
+   Start: <select id="st"></select>
+   Target (optional): <input type="text" id="tg" placeholder="none" style="width:70px">
+  </div>
+  <div class="row">
+   <button class="p" id="play">▶ Start</button><button id="step">Step ›</button><button id="back">‹ Back</button><button id="reset">Reset</button>
+   Speed <input type="range" id="sp" min="1" max="10" value="5">
+  </div>
+  <div class="msg" id="msg">Build or load a graph, choose an algorithm, then press Start or Step.</div>
+ </div>
+
+ <div class="c">
+  <div class="ph">③ Live data</div>
+  <div class="lab" id="fh">Queue</div><div class="box" id="fr"></div>
+  <div class="lab">Visit order</div><div class="box" id="ord"></div>
+  <div class="st"><div><b id="s1">0</b><span class="m">Visited</span></div><div><b id="s2">0</b><span class="m">Edges checked</span></div><div><b id="s3">0</b><span class="m">Steps</span></div></div>
+  <p class="m" style="margin:8px 0 10px" id="cx"></p>
+  <div class="lab">Adjacency list</div><table id="adj"></table>
+ </div>
+</div>
+
+<!-- RIGHT: CODE -->
+<div>
+ <div class="c" style="position:sticky;top:8px">
+  <div class="ph"><span id="ct">Code: BFS</span><span class="m" style="margin-left:auto;font-weight:400">highlighted line = current step</span></div>
+  <pre class="code" id="code"></pre>
+  <div class="lab" style="margin-top:12px">Step log</div>
+  <ol id="log"></ol>
+ </div>
+</div>
+</div>
+
+<div class="c">
+<div class="ph">Concepts, types and operations</div>
+<details open><summary>What is a graph?</summary>A graph <code>G = (V, E)</code> is a set of <b>vertices</b> (nodes) connected by <b>edges</b>. Two vertices joined by an edge are <b>adjacent</b>; the number of edges at a vertex is its <b>degree</b>. A <b>path</b> is a sequence of vertices joined by edges.</details>
+<details><summary>Types of graphs</summary><b>Undirected</b> (edges go both ways) vs <b>directed / digraph</b> (edges have a direction). Toggle “Directed” to see how traversal changes. This tool stores graphs as an <b>adjacency list</b>; the alternative is an adjacency matrix.</details>
+<details><summary>Breadth-First Search (BFS)</summary>Explores level by level using a <b>queue</b> (FIFO). Finds the <b>shortest path in an unweighted graph</b>. Time <code>O(V+E)</code>, space <code>O(V)</code>.</details>
+<details><summary>Depth-First Search (DFS)</summary>Goes as deep as possible before backtracking using a <b>stack</b> (LIFO) or recursion. Time <code>O(V+E)</code>, space <code>O(V)</code>. Neighbours are explored in alphabetical order. Green edges show the traversal tree.</details>
+<details><summary>Practical applications</summary><b>BFS:</b> shortest routes in maps/networks, social-network “degrees of separation”, web crawlers, network broadcasting. <b>DFS:</b> cycle detection, topological sorting (task/build dependencies), maze solving, connected components, file-system traversal.</details>
+<details><summary>Test cases to try (normal, boundary, invalid)</summary>
+<b>Normal:</b> Sample graph, BFS from A → A B C D E F H G; DFS from A → A B D E G C F H.
+<b>Boundary:</b> single node; no edges; disconnected graph; cycle; target = start; target not in graph.
+<b>Invalid:</b> self-loop (A-A), duplicate edge, edge to a missing node, malformed text such as “AB”.</details>
+<p class="m">Plain HTML, CSS and JavaScript, no external libraries. The algorithm records every step as a snapshot; Start/Step/Back replay them.</p>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg',sv=$('sv');
+let nodes=[],edges=[],mode='N',sel=null,steps=[],idx=-1,timer=null,drag=null;
+const LET='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const SAMPLE={n:{A:[320,50],B:[170,130],C:[470,130],D:[90,250],E:[250,250],F:[400,250],G:[170,350],H:[560,250]},
+e:['A-B','A-C','B-D','B-E','C-F','C-H','E-G','F-H']};
+const CODE={
+bfs:["function bfs(graph, start) {",
+"  const visited = [], queue = [start];",
+"  const discovered = new Set([start]);",
+"  while (queue.length > 0) {",
+"    const u = queue.shift();      // dequeue",
+"    visited.push(u);              // visit u",
+"    for (const v of graph[u]) {   // each neighbour",
+"      if (!discovered.has(v)) {",
+"        discovered.add(v);",
+"        queue.push(v);            // enqueue",
+"      }",
+"    }",
+"  }",
+"  return visited;",
+"}"],
+dfs:["function dfs(graph, start) {",
+"  const visited = [], stack = [start];",
+"  while (stack.length > 0) {",
+"    const u = stack.pop();        // pop",
+"    if (visited.includes(u)) continue;",
+"    visited.push(u);              // visit u",
+"    const nbrs = graph[u];",
+"    for (let i = nbrs.length - 1; i >= 0; i--) {",
+"      if (!visited.includes(nbrs[i]))",
+"        stack.push(nbrs[i]);      // push",
+"    }",
+"  }",
+"  return visited;",
+"}"]};
+const dirOn=()=>$('dir').checked;
+const hint=t=>$('hint').textContent=t||'';
+const nb=id=>edges.filter(e=>e.a===id||(!dirOn()&&e.b===id)).map(e=>e.a===id?e.b:e.a).sort();
+const hasE=(a,b)=>edges.some(e=>(e.a===a&&e.b===b)||(!dirOn()&&e.a===b&&e.b===a));
+function stop(){clearInterval(timer);timer=null;$('play').textContent='▶ Start'}
+function invalidate(){stop();steps=[];idx=-1;draw();renderSide();$('msg').textContent='Graph changed. Press Start or Step to run the traversal.'}
+function addNode(x,y){if(nodes.length>=26)return hint('Maximum 26 nodes.');
+ const id=[...LET].find(c=>!nodes.some(n=>n.id===c));nodes.push({id,x,y});fillStart();invalidate()}
+function addEdge(a,b){if(a===b)return hint('Error: self-loops are not allowed.');
+ if(!nodes.some(n=>n.id===a)||!nodes.some(n=>n.id===b))return hint('Error: both nodes must exist.');
+ if(hasE(a,b))return hint('Error: that edge already exists.');edges.push({a,b});hint('');invalidate()}
+function fillStart(){const s=$('st'),v=s.value;s.innerHTML=nodes.map(n=>`<option>${n.id}</option>`).join('');if(nodes.some(n=>n.id===v))s.value=v}
+function load(){nodes=Object.entries(SAMPLE.n).map(([id,[x,y]])=>({id,x,y}));edges=[];$('dir').checked=false;
+ SAMPLE.e.forEach(s=>{const[a,b]=s.split('-');edges.push({a,b})});fillStart();hint('');invalidate()}
+function pt(ev){const p=sv.createSVGPoint();p.x=ev.clientX;p.y=ev.clientY;const q=p.matrixTransform(sv.getScreenCTM().inverse());return{x:Math.max(25,Math.min(615,q.x)),y:Math.max(25,Math.min(375,q.y))}}
+
+/* ---------- algorithm: records snapshots (with code line numbers) ---------- */
+function build(){
+ const alg=$('alg').value,s=$('st').value,tg=$('tg').value.trim().toUpperCase(),out=[];
+ const vis=[],tree=[];let fr=[],examined=0,disc=new Set();
+ const snap=o=>out.push(Object.assign({vis:[...vis],fr:fr.map(x=>x.n),tree:[...tree],ex:examined,cur:null,edge:null,msg:'',line:-1},o));
+ if(!s)return[];
+ if(tg&&!nodes.some(n=>n.id===tg)){hint('Invalid target: node '+tg+' does not exist.');return[]}
+ hint('');let found=false;
+ if(alg==='bfs'){
+  fr=[{n:s}];disc.add(s);snap({line:1,msg:`Enqueue start vertex ${s} and mark it discovered.`});
+  while(fr.length&&!found){
+   const u=fr.shift().n;vis.push(u);
+   snap({cur:u,line:4,msg:`Dequeue ${u} and visit it.`});
+   if(u===tg){found=true;snap({cur:u,line:5,msg:`Target ${tg} found!`});break}
+   for(const v of nb(u)){examined++;
+    if(disc.has(v))snap({cur:u,edge:[u,v],line:7,msg:`Check ${u}→${v}: already discovered, skip.`});
+    else{disc.add(v);fr.push({n:v});tree.push(u+'>'+v);snap({cur:u,edge:[u,v],line:9,msg:`Check ${u}→${v}: new vertex, enqueue ${v}.`})}}
+  }
+ }else{
+  fr=[{n:s,from:null}];snap({line:1,msg:`Push start vertex ${s} onto the stack.`});
+  while(fr.length&&!found){
+   const t=fr.pop(),u=t.n;
+   if(vis.includes(u)){snap({line:4,msg:`Pop ${u}: already visited, discard.`});continue}
+   vis.push(u);if(t.from)tree.push(t.from+'>'+u);
+   snap({cur:u,line:5,msg:`Pop ${u} and visit it${t.from?` (reached from ${t.from})`:''}.`});
+   if(u===tg){found=true;snap({cur:u,line:5,msg:`Target ${tg} found!`});break}
+   const ns=nb(u);
+   for(const v of [...ns].reverse()){examined++;if(!vis.includes(v))fr.push({n:v,from:u})}
+   snap({cur:u,line:9,msg:ns.length?`Push unvisited neighbours of ${u} (${ns.join(', ')}); smallest ends on top.`:`${u} has no neighbours to push.`});
+  }
+ }
+ const un=nodes.filter(n=>!vis.includes(n.id)).length;
+ out.push(Object.assign({},out[out.length-1]||{},{cur:null,edge:null,fr:[],line:alg==='bfs'?13:12,
+  msg:(found?`Done. Target ${tg} found after visiting ${vis.length} vertices.`:(tg?`Done. Target ${tg} is not reachable from ${s}.`:`Done. Visited ${vis.length} vertices.`))+(un&&!tg?` ${un} vertex(es) unreachable from ${s}.`:'')}));
+ return out;
+}
+
+/* ---------- rendering ---------- */
+function draw(){
+ const S=idx>=0?steps[idx]:null,d=dirOn();sv.innerHTML='';
+ sv.insertAdjacentHTML('beforeend','<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker></defs>');
+ edges.forEach(e=>{const A=nodes.find(n=>n.id===e.a),B=nodes.find(n=>n.id===e.b);if(!A||!B)return;
+  const l=document.createElementNS(NS,'line'),dx=B.x-A.x,dy=B.y-A.y,L=Math.hypot(dx,dy)||1,r=d?22:0;
+  l.setAttribute('x1',A.x);l.setAttribute('y1',A.y);l.setAttribute('x2',B.x-dx/L*r);l.setAttribute('y2',B.y-dy/L*r);
+  const k=e.a+'>'+e.b,k2=e.b+'>'+e.a;let c='var(--ed)',w=2.5;
+  if(S){if(S.tree.includes(k)||(!d&&S.tree.includes(k2))){c='var(--tree)';w=5}
+   if(S.edge&&((S.edge[0]===e.a&&S.edge[1]===e.b)||(!d&&S.edge[0]===e.b&&S.edge[1]===e.a))){c='var(--cur)';w=6}}
+  l.setAttribute('stroke',c);l.setAttribute('stroke-width',w);l.setAttribute('class','e');if(d)l.setAttribute('marker-end','url(#ar)');
+  if(mode==='D')l.style.cursor='pointer';l.onclick=()=>{if(mode==='D'){edges=edges.filter(x=>x!==e);invalidate()}};
+  sv.appendChild(l)});
+ nodes.forEach(n=>{const g=document.createElementNS(NS,'g');g.setAttribute('class','n');
+  let f='var(--un)';if(S){if(S.vis.includes(n.id))f='var(--vis)';if(S.fr.includes(n.id))f='var(--fr)';if(S.cur===n.id)f='var(--cur)'}
+  g.innerHTML=`<circle cx="${n.x}" cy="${n.y}" r="20" fill="${f}" ${sel===n.id?'stroke-width="4"':''}/><text x="${n.x}" y="${n.y}">${n.id}</text>`;
+  g.style.cursor=mode==='M'?'grab':'pointer';
+  g.onpointerdown=ev=>{ev.stopPropagation();
+   if(mode==='M'){drag=n;sv.setPointerCapture(ev.pointerId)}
+   else if(mode==='D'){nodes=nodes.filter(x=>x!==n);edges=edges.filter(e=>e.a!==n.id&&e.b!==n.id);fillStart();invalidate()}
+   else if(mode==='E'){if(!sel){sel=n.id;hint('Now click the second node.');draw()}else{const a=sel;sel=null;addEdge(a,n.id);if(a===n.id)draw()}}};
+  sv.appendChild(g)});
+}
+function renderCode(){
+ const a=$('alg').value,S=idx>=0?steps[idx]:null,pre=$('code');pre.innerHTML='';
+ $('ct').textContent='Code: '+a.toUpperCase()+' (JavaScript)';
+ CODE[a].forEach((t,i)=>{const d=document.createElement('div'),sp=document.createElement('span');
+  sp.textContent=i+1;d.appendChild(sp);
+  const k=t.indexOf('//');d.appendChild(document.createTextNode(k<0?t:t.slice(0,k)));
+  if(k>=0){const em=document.createElement('em');em.textContent=t.slice(k);d.appendChild(em)}
+  if(S&&S.line===i)d.className='hl';pre.appendChild(d)});
+}
+function renderSide(){
+ const S=idx>=0?steps[idx]:null,bfs=$('alg').value==='bfs';
+ $('fh').textContent=bfs?'Queue (front → back)':'Stack (top = right)';
+ $('fr').innerHTML=S?S.fr.map(x=>`<span class="t">${x}</span>`).join(''):'';
+ $('ord').innerHTML=S?S.vis.map(x=>`<span class="t v">${x}</span>`).join(''):'';
+ $('s1').textContent=S?S.vis.length:0;$('s2').textContent=S?S.ex:0;$('s3').textContent=Math.max(idx,0);
+ $('cx').textContent=`|V| = ${nodes.length}, |E| = ${edges.length}. Time O(V+E) ≈ ${nodes.length+edges.length} operations; space O(V).`;
+ if(S)$('msg').textContent=S.msg;
+ const lg=$('log');lg.innerHTML='';for(let i=0;i<=idx;i++){const li=document.createElement('li');li.textContent=steps[i].msg;if(i===idx)li.className='a';lg.appendChild(li)}
+ lg.scrollTop=lg.scrollHeight;
+ $('adj').innerHTML='<tr><th>Vertex</th><th>Neighbours</th></tr>'+nodes.map(n=>`<tr><td>${n.id}</td><td>${nb(n.id).join(', ')||'—'}</td></tr>`).join('');
+ $('step').disabled=!nodes.length;$('back').disabled=idx<0;renderCode();
+}
+
+/* ---------- controls ---------- */
+function go(i){idx=i;draw();renderSide()}
+function ensure(){if(!nodes.length){$('msg').textContent='Add at least one node first.';return false}
+ if(!steps.length){steps=build();if(!steps.length)return false;idx=-1}return true}
+function next(){if(!ensure())return false;if(idx>=steps.length-1){stop();return false}
+ go(idx+1);if(idx>=steps.length-1)stop();return true}
+$('step').onclick=()=>{stop();next()};
+$('back').onclick=()=>{stop();if(idx>=0)go(idx-1)};
+const tick=()=>{if(!next())stop()};
+$('play').onclick=()=>{if(timer){stop();return}if(!ensure())return;if(idx>=steps.length-1)go(-1);
+ $('play').textContent='❚❚ Pause';timer=setInterval(tick,1100-$('sp').value*100)};
+$('sp').oninput=()=>{if(timer){clearInterval(timer);timer=setInterval(tick,1100-$('sp').value*100)}};
+$('reset').onclick=()=>{stop();steps=[];go(-1);$('msg').textContent='Reset. Press Start or Step to run again.'};
+$('clear').onclick=()=>{nodes=[];edges=[];sel=null;fillStart();hint('');invalidate()};
+$('sample').onclick=load;
+$('alg').onchange=$('st').onchange=$('tg').onchange=()=>{stop();steps=[];idx=-1;draw();renderSide()};
+$('dir').onchange=invalidate;
+$('addE').onclick=()=>{const m=$('ein').value.trim().toUpperCase().match(/^([A-Z])\s*-\s*([A-Z])$/);
+ if(!m)return hint('Error: use the format A-B.');addEdge(m[1],m[2]);$('ein').value=''};
+[['mN','N'],['mE','E'],['mM','M'],['mD','D']].forEach(([id,m])=>$(id).onclick=()=>{mode=m;sel=null;
+ ['mN','mE','mM','mD'].forEach(b=>$(b).classList.toggle('on',b===id));
+ hint({N:'Click empty space to add a node.',E:'Click two nodes to connect them.',M:'Drag nodes to reposition.',D:'Click a node or edge to delete it.'}[m]);draw()});
+sv.onclick=ev=>{if(mode==='N'){const p=pt(ev);addNode(p.x,p.y)}};
+sv.onpointermove=ev=>{if(drag){const p=pt(ev);drag.x=p.x;drag.y=p.y;draw()}};
+sv.onpointerup=()=>{drag=null};
+hint('Click empty space to add a node.');
+load();
+</script>
+</body>
+</html>
